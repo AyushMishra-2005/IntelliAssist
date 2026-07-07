@@ -23,9 +23,12 @@ import {
   Settings,
   Zap,
   Target,
+  ChevronDown,
+  X
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -50,7 +53,7 @@ const TicketTemplates = () => {
     visibility: 'private',
     department: '',
     isPublic: false,
-    icon: '📋',
+    icon: 'FileText',
     color: '#3B82F6',
   });
 
@@ -83,6 +86,7 @@ const TicketTemplates = () => {
     { name: 'Zap', component: Zap },
     { name: 'Target', component: Target },
   ];
+  
   const colors = [
     '#3B82F6',
     '#10B981',
@@ -92,7 +96,8 @@ const TicketTemplates = () => {
     '#EC4899',
     '#06B6D4',
     '#6366F1',
-  ];
+  ];
+
   const renderIcon = (iconName, size = 24, className = '') => {
     const iconOption = iconOptions.find((opt) => opt.name === iconName);
     if (iconOption) {
@@ -121,6 +126,7 @@ const TicketTemplates = () => {
       setFilteredTemplates(response.data);
     } catch (error) {
       console.error('Error fetching templates:', error);
+      toast.error('Failed to fetch templates');
     } finally {
       setLoading(false);
     }
@@ -152,10 +158,12 @@ const TicketTemplates = () => {
         await axios.put(`${API_URL}/ticket-templates/${editingTemplate._id}`, payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        toast.success('Template updated successfully');
       } else {
         await axios.post(`${API_URL}/ticket-templates`, payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        toast.success('Template created successfully');
       }
 
       setShowModal(false);
@@ -163,7 +171,7 @@ const TicketTemplates = () => {
       fetchTemplates();
     } catch (error) {
       console.error('Error saving template:', error);
-      alert(error.response?.data?.message || 'Error saving template');
+      toast.error(error.response?.data?.message || 'Error saving template');
     }
   };
 
@@ -175,10 +183,11 @@ const TicketTemplates = () => {
       await axios.delete(`${API_URL}/ticket-templates/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      toast.success('Template deleted successfully');
       fetchTemplates();
     } catch (error) {
       console.error('Error deleting template:', error);
-      alert('Error deleting template');
+      toast.error('Error deleting template');
     }
   };
 
@@ -192,10 +201,11 @@ const TicketTemplates = () => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+      toast.success('Template duplicated successfully');
       fetchTemplates();
     } catch (error) {
       console.error('Error duplicating template:', error);
-      alert('Error duplicating template');
+      toast.error('Error duplicating template');
     }
   };
 
@@ -229,7 +239,7 @@ const TicketTemplates = () => {
       visibility: template.visibility,
       department: template.department?._id || '',
       isPublic: template.isPublic || false,
-      icon: template.icon || '📋',
+      icon: template.icon || 'FileText',
       color: template.color || '#3B82F6',
     });
     setShowModal(true);
@@ -255,428 +265,542 @@ const TicketTemplates = () => {
 
   const getVisibilityBadge = (visibility) => {
     const badges = {
-      private: 'bg-gray-100 text-gray-800',
-      department: 'bg-blue-100 text-blue-800',
-      global: 'bg-green-100 text-green-800',
-      public: 'bg-purple-100 text-purple-800',
+      private: 'text-gray-400 bg-gray-400/10 border-gray-400/20',
+      department: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
+      global: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
+      public: 'text-purple-400 bg-purple-400/10 border-purple-400/20',
     };
     return badges[visibility] || badges.private;
   };
 
   const getPriorityBadge = (priority) => {
     const badges = {
-      low: 'bg-gray-100 text-gray-700',
-      medium: 'bg-blue-100 text-blue-700',
-      high: 'bg-orange-100 text-orange-700',
-      urgent: 'bg-red-100 text-red-700',
+      low: 'text-gray-400 bg-gray-400/10 border-gray-400/20',
+      medium: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
+      high: 'text-orange-400 bg-orange-400/10 border-orange-400/20',
+      urgent: 'text-rose-400 bg-rose-400/10 border-rose-400/20',
     };
     return badges[priority] || badges.medium;
   };
 
+  const getCategoryBadge = (category) => {
+    const badges = {
+      technical: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
+      billing: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
+      account: 'text-purple-400 bg-purple-400/10 border-purple-400/20',
+      feature_request: 'text-indigo-400 bg-indigo-400/10 border-indigo-400/20',
+      bug_report: 'text-rose-400 bg-rose-400/10 border-rose-400/20',
+      general: 'text-gray-400 bg-gray-400/10 border-gray-400/20',
+      other: 'text-gray-400 bg-gray-400/10 border-gray-400/20',
+    };
+    return badges[category] || badges.general;
+  };
+
+  const clearSearch = () => {
+    setSearchTerm('');
+    setSelectedCategory('all');
+  };
+
+  const hasActiveFilters = searchTerm || selectedCategory !== 'all';
+
   if (loading) {
-    return <div className="flex justify-center items-center h-64">Loading...</div>;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px]">
+        <div className="relative">
+          <div className="w-16 h-16 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin"></div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full animate-pulse"></div>
+          </div>
+        </div>
+        <p className="mt-6 text-gray-400 font-medium">Loading templates...</p>
+      </div>
+    );
   }
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Ticket Templates</h1>
-          <p className="text-gray-600 mt-1">Create tickets faster with pre-defined templates</p>
-        </div>
-        <button
-          onClick={() => {
-            resetForm();
-            setShowModal(true);
-          }}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-        >
-          <Plus size={20} />
-          New Template
-        </button>
-      </div>
-
-      {}
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="relative">
-            <Search
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-              size={20}
-            />
-            <input
-              type="text"
-              placeholder="Search templates..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-          <div className="relative">
-            <Filter
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-              size={20}
-            />
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
-            >
-              {categories.map((cat) => (
-                <option key={cat.value} value={cat.value}>
-                  {cat.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredTemplates.map((template) => (
-          <div
-            key={template._id}
-            className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden"
-          >
-            <div
-              className="h-2"
-              style={{ backgroundColor: template.color || '#3B82F6' }}
-            ></div>
-            <div className="p-4">
-              <div className="flex items-start gap-3 mb-3">
-                <div
-                  className="p-2 rounded-lg"
-                  style={{ backgroundColor: `${template.color}20` }}
-                >
-                  {renderIcon(template.icon, 28, `text-[${template.color}]`)}
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 mb-1">{template.name}</h3>
-                  {template.description && (
-                    <p className="text-sm text-gray-600 mb-2">{template.description}</p>
-                  )}
-                  <div className="flex flex-wrap gap-2">
-                    <span
-                      className={`text-xs px-2 py-1 rounded-full ${getVisibilityBadge(
-                        template.visibility
-                      )}`}
-                    >
-                      {template.visibility}
-                    </span>
-                    <span
-                      className={`text-xs px-2 py-1 rounded-full ${getPriorityBadge(
-                        template.priority
-                      )}`}
-                    >
-                      {template.priority}
-                    </span>
-                    <span className="text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-800">
-                      {template.category}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mb-3">
-                <p className="text-xs font-medium text-gray-500 mb-1">Ticket Title:</p>
-                <p className="text-sm text-gray-700 line-clamp-1">{template.title}</p>
-              </div>
-
-              {template.tags && template.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1 mb-3">
-                  {template.tags.map((tag, idx) => (
-                    <span
-                      key={idx}
-                      className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
-                <div className="flex items-center gap-1">
-                  <TrendingUp size={14} />
-                  <span>Used {template.usageCount} times</span>
-                </div>
-                {template.department && (
-                  <span className="text-blue-600">{template.department.name}</span>
-                )}
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleUseTemplate(template)}
-                  className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-medium"
-                >
-                  <FileText size={16} />
-                  Use Template
-                </button>
-                <button
-                  onClick={() => handleEdit(template)}
-                  className="px-3 py-2 bg-gray-50 text-gray-600 rounded hover:bg-gray-100"
-                >
-                  <Edit2 size={16} />
-                </button>
-                <button
-                  onClick={() => handleDuplicate(template._id)}
-                  className="px-3 py-2 bg-gray-50 text-gray-600 rounded hover:bg-gray-100"
-                >
-                  <Copy size={16} />
-                </button>
-                <button
-                  onClick={() => handleDelete(template._id)}
-                  className="px-3 py-2 bg-red-50 text-red-600 rounded hover:bg-red-100"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
+    <div className="bg-black min-h-screen p-6 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="h-8 w-1 bg-gradient-to-b from-blue-500 to-purple-500 rounded-full"></div>
+              <span className="text-sm font-medium text-blue-400 uppercase tracking-wider">Templates</span>
             </div>
+            <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">
+              Ticket Templates
+            </h1>
+            <p className="text-gray-400 mt-1.5">Create tickets faster with pre-defined templates</p>
           </div>
-        ))}
-      </div>
-
-      {filteredTemplates.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-gray-500">No templates found. Create your first one!</p>
+          
+          <button
+            onClick={() => {
+              resetForm();
+              setShowModal(true);
+            }}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-xl hover:shadow-blue-600/20 transition-all hover:scale-105"
+          >
+            <Plus size={20} />
+            New Template
+          </button>
         </div>
-      )}
 
-      {}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <h2 className="text-xl font-bold mb-4">
-                {editingTemplate ? 'Edit Template' : 'Create Template'}
-              </h2>
+        {/* Search & Filter */}
+        <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl border border-gray-800/60 p-4 md:p-6 mb-6">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={20} />
+              <input
+                type="text"
+                placeholder="Search templates by name or description..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 bg-black/40 border border-gray-700/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
+              />
+            </div>
+            <div className="md:w-64 relative">
+              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={20} />
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="w-full appearance-none pl-10 pr-10 py-2.5 bg-black/40 border border-gray-700/50 rounded-lg text-white focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer"
+              >
+                {categories.map((cat) => (
+                  <option key={cat.value} value={cat.value}>
+                    {cat.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none" size={16} />
+            </div>
+            {hasActiveFilters && (
+              <button
+                onClick={clearSearch}
+                className="px-4 py-2.5 text-sm text-gray-400 hover:text-white transition-colors"
+              >
+                Clear all
+              </button>
+            )}
+          </div>
+        </div>
 
-              <form onSubmit={handleSubmit}>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Template Name *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="e.g., Password Reset Request"
-                      />
+        {/* Templates Grid */}
+        {filteredTemplates.length === 0 ? (
+          <div className="flex flex-col items-center justify-center min-h-[400px] bg-gray-900/30 rounded-xl border border-gray-800/60">
+            <div className="w-20 h-20 rounded-full bg-gray-800/50 flex items-center justify-center mb-4">
+              <FileText size={32} className="text-gray-500" />
+            </div>
+            <h3 className="text-xl font-semibold text-white mb-2">No templates found</h3>
+            <p className="text-gray-400 text-center max-w-md mb-6">
+              {hasActiveFilters 
+                ? 'No templates match your current filters. Try adjusting your search criteria.'
+                : 'Get started by creating your first template.'}
+            </p>
+            {hasActiveFilters ? (
+              <button
+                onClick={clearSearch}
+                className="px-6 py-2.5 bg-blue-600/20 text-blue-400 rounded-lg hover:bg-blue-600/30 transition-all border border-blue-500/30"
+              >
+                Clear filters
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  resetForm();
+                  setShowModal(true);
+                }}
+                className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-xl hover:shadow-blue-600/20 transition-all hover:scale-105"
+              >
+                <Plus size={18} className="inline mr-2" />
+                Create your first template
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredTemplates.map((template) => (
+              <div
+                key={template._id}
+                className="bg-gray-900/50 backdrop-blur-sm rounded-xl border border-gray-800/60 hover:border-blue-500/40 hover:bg-gray-900/70 transition-all hover:shadow-lg hover:shadow-blue-600/5 overflow-hidden group"
+              >
+                <div
+                  className="h-1.5"
+                  style={{ backgroundColor: template.color || '#3B82F6' }}
+                ></div>
+                <div className="p-5">
+                  <div className="flex items-start gap-3 mb-3">
+                    <div
+                      className="p-2.5 rounded-xl border border-gray-700/50 group-hover:border-blue-500/30 transition-all"
+                      style={{ backgroundColor: `${template.color}15` }}
+                    >
+                      <span style={{ color: template.color || '#3B82F6' }}>
+                        {renderIcon(template.icon, 24)}
+                      </span>
                     </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Category
-                      </label>
-                      <select
-                        value={formData.category}
-                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      >
-                        {categories.filter((c) => c.value !== 'all').map((cat) => (
-                          <option key={cat.value} value={cat.value}>
-                            {cat.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Description
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Brief description of this template"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Ticket Title *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Default title for tickets created from this template"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Ticket Content *
-                    </label>
-                    <textarea
-                      required
-                      value={formData.content}
-                      onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                      rows={6}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Default content for tickets..."
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Default Priority
-                      </label>
-                      <select
-                        value={formData.priority}
-                        onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      >
-                        <option value="low">Low</option>
-                        <option value="medium">Medium</option>
-                        <option value="high">High</option>
-                        <option value="urgent">Urgent</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Tags (comma-separated)
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.tags}
-                        onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="password, reset, account"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Icon</label>
-                      <div className="flex gap-2 flex-wrap">
-                        {iconOptions.map((iconOption) => (
-                          <button
-                            key={iconOption.name}
-                            type="button"
-                            onClick={() => setFormData({ ...formData, icon: iconOption.name })}
-                            className={`p-2 rounded border-2 ${
-                              formData.icon === iconOption.name
-                                ? 'border-blue-500 bg-blue-50'
-                                : 'border-gray-200 hover:border-gray-300'
-                            }`}
-                          >
-                            {renderIcon(iconOption.name, 24)}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Color</label>
-                      <div className="flex gap-2 flex-wrap">
-                        {colors.map((color) => (
-                          <button
-                            key={color}
-                            type="button"
-                            onClick={() => setFormData({ ...formData, color })}
-                            className={`w-10 h-10 rounded border-2 ${
-                              formData.color === color
-                                ? 'border-gray-800 scale-110'
-                                : 'border-gray-200'
-                            }`}
-                            style={{ backgroundColor: color }}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Visibility
-                      </label>
-                      <select
-                        value={formData.visibility}
-                        onChange={(e) => setFormData({ ...formData, visibility: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      >
-                        <option value="private">Private (Only Me)</option>
-                        <option value="department">Department</option>
-                        <option value="global">Global (All Users)</option>
-                      </select>
-                    </div>
-
-                    {formData.visibility === 'department' && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Department
-                        </label>
-                        <select
-                          value={formData.department}
-                          onChange={(e) =>
-                            setFormData({ ...formData, department: e.target.value })
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          required={formData.visibility === 'department'}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-white group-hover:text-blue-400 transition-colors mb-1 truncate">
+                        {template.name}
+                      </h3>
+                      {template.description && (
+                        <p className="text-sm text-gray-400 mb-2 line-clamp-2">
+                          {template.description}
+                        </p>
+                      )}
+                      <div className="flex flex-wrap gap-1.5">
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-medium border-2 ${getVisibilityBadge(
+                            template.visibility
+                          )}`}
                         >
-                          <option value="">Select Department</option>
-                          {departments.map((dept) => (
-                            <option key={dept._id} value={dept._id}>
-                              {dept.name}
-                            </option>
-                          ))}
-                        </select>
+                          {template.visibility}
+                        </span>
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-medium border-2 ${getPriorityBadge(
+                            template.priority
+                          )}`}
+                        >
+                          {template.priority}
+                        </span>
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-medium border-2 ${getCategoryBadge(
+                            template.category
+                          )}`}
+                        >
+                          {template.category}
+                        </span>
                       </div>
+                    </div>
+                  </div>
+
+                  <div className="mb-3">
+                    <p className="text-xs font-medium text-gray-500 mb-1">Ticket Title:</p>
+                    <p className="text-sm text-gray-300 line-clamp-1">{template.title}</p>
+                  </div>
+
+                  {template.tags && template.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      {template.tags.map((tag, idx) => (
+                        <span
+                          key={idx}
+                          className="text-xs px-2 py-0.5 bg-gray-800/50 text-gray-400 rounded-lg border border-gray-700/50"
+                        >
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
+                    <div className="flex items-center gap-1">
+                      <TrendingUp size={14} />
+                      <span>Used {template.usageCount || 0} times</span>
+                    </div>
+                    {template.department && (
+                      <span className="text-blue-400">{template.department.name}</span>
                     )}
                   </div>
 
-                  <div>
-                    <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.isPublic}
-                        onChange={(e) => setFormData({ ...formData, isPublic: e.target.checked })}
-                        className="w-4 h-4"
-                      />
-                      Make this template public (visible to non-authenticated users)
-                    </label>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleUseTemplate(template)}
+                      className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg hover:shadow-blue-600/20 transition-all text-sm font-medium hover:scale-[1.02]"
+                    >
+                      <FileText size={16} />
+                      Use Template
+                    </button>
+                    <button
+                      onClick={() => handleEdit(template)}
+                      className="px-3 py-2 bg-black/40 text-gray-400 rounded-lg hover:bg-gray-800/50 hover:text-white transition-all border border-gray-700/50 hover:border-gray-600"
+                      title="Edit"
+                    >
+                      <Edit2 size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleDuplicate(template._id)}
+                      className="px-3 py-2 bg-black/40 text-gray-400 rounded-lg hover:bg-gray-800/50 hover:text-white transition-all border border-gray-700/50 hover:border-gray-600"
+                      title="Duplicate"
+                    >
+                      <Copy size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(template._id)}
+                      className="px-3 py-2 bg-black/40 text-gray-400 rounded-lg hover:bg-rose-500/20 hover:text-rose-400 transition-all border border-gray-700/50 hover:border-rose-500/30"
+                      title="Delete"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
                 </div>
+              </div>
+            ))}
+          </div>
+        )}
 
-                <div className="flex gap-3 mt-6">
+        {/* Create/Edit Modal */}
+        {showModal && (
+          <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4">
+            <div className="bg-black rounded-2xl border-2 border-gray-700/70 max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl shadow-black/50 shadow-[0_0_50px_rgba(59,130,246,0.08)]">
+              <div className="p-6 border-b-2 border-gray-700/70">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-3 mb-1">
+                      <div className="h-6 w-1 bg-gradient-to-b from-blue-500 to-purple-500 rounded-full shadow-lg shadow-blue-500/30"></div>
+                      <h2 className="text-xl font-bold text-white">
+                        {editingTemplate ? 'Edit Template' : 'Create Template'}
+                      </h2>
+                    </div>
+                    <p className="text-sm text-gray-400 ml-4">
+                      {editingTemplate ? 'Update your template details' : 'Create a new ticket template'}
+                    </p>
+                  </div>
                   <button
-                    type="submit"
-                    className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-                  >
-                    {editingTemplate ? 'Update' : 'Create'}
-                  </button>
-                  <button
-                    type="button"
                     onClick={() => {
                       setShowModal(false);
                       resetForm();
                     }}
-                    className="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300"
+                    className="p-2 hover:bg-gray-800/50 rounded-lg transition-all text-gray-400 hover:text-white border-2 border-transparent hover:border-gray-700/50"
                   >
-                    Cancel
+                    <X size={20} />
                   </button>
                 </div>
-              </form>
+              </div>
+
+              <div className="p-6">
+                <form onSubmit={handleSubmit}>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-1.5">
+                          Template Name *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          className="w-full px-4 py-2.5 bg-black/40 border border-gray-700/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                          placeholder="e.g., Password Reset Request"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-1.5">
+                          Category
+                        </label>
+                        <div className="relative">
+                          <select
+                            value={formData.category}
+                            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                            className="w-full appearance-none px-4 py-2.5 pr-10 bg-black/40 border border-gray-700/50 rounded-lg text-white focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer"
+                          >
+                            {categories.filter((c) => c.value !== 'all').map((cat) => (
+                              <option key={cat.value} value={cat.value}>
+                                {cat.label}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none" size={16} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-400 mb-1.5">
+                        Description
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        className="w-full px-4 py-2.5 bg-black/40 border border-gray-700/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                        placeholder="Brief description of this template"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-400 mb-1.5">
+                        Ticket Title *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.title}
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        className="w-full px-4 py-2.5 bg-black/40 border border-gray-700/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                        placeholder="Default title for tickets created from this template"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-400 mb-1.5">
+                        Ticket Content *
+                      </label>
+                      <textarea
+                        required
+                        value={formData.content}
+                        onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                        rows={6}
+                        className="w-full px-4 py-2.5 bg-black/40 border border-gray-700/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all resize-none"
+                        placeholder="Default content for tickets..."
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-1.5">
+                          Default Priority
+                        </label>
+                        <div className="relative">
+                          <select
+                            value={formData.priority}
+                            onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                            className="w-full appearance-none px-4 py-2.5 pr-10 bg-black/40 border border-gray-700/50 rounded-lg text-white focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer"
+                          >
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                            <option value="urgent">Urgent</option>
+                          </select>
+                          <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none" size={16} />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-1.5">
+                          Tags (comma-separated)
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.tags}
+                          onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                          className="w-full px-4 py-2.5 bg-black/40 border border-gray-700/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                          placeholder="password, reset, account"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-1.5">Icon</label>
+                        <div className="flex gap-2 flex-wrap">
+                          {iconOptions.slice(0, 8).map((iconOption) => (
+                            <button
+                              key={iconOption.name}
+                              type="button"
+                              onClick={() => setFormData({ ...formData, icon: iconOption.name })}
+                              className={`p-2 rounded-lg border-2 transition-all ${
+                                formData.icon === iconOption.name
+                                  ? 'border-blue-500/60 bg-blue-600/20 text-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.15)]'
+                                  : 'border-gray-700/50 hover:border-gray-600 text-gray-400 hover:text-white'
+                              }`}
+                            >
+                              {renderIcon(iconOption.name, 20)}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-1.5">Color</label>
+                        <div className="flex gap-2 flex-wrap">
+                          {colors.map((color) => (
+                            <button
+                              key={color}
+                              type="button"
+                              onClick={() => setFormData({ ...formData, color })}
+                              className={`w-10 h-10 rounded-lg border-2 transition-all ${
+                                formData.color === color
+                                  ? 'border-blue-500/60 scale-110 shadow-[0_0_20px_rgba(59,130,246,0.15)]'
+                                  : 'border-gray-700/50 hover:border-gray-600'
+                              }`}
+                              style={{ backgroundColor: color }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-1.5">
+                          Visibility
+                        </label>
+                        <div className="relative">
+                          <select
+                            value={formData.visibility}
+                            onChange={(e) => setFormData({ ...formData, visibility: e.target.value })}
+                            className="w-full appearance-none px-4 py-2.5 pr-10 bg-black/40 border border-gray-700/50 rounded-lg text-white focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer"
+                          >
+                            <option value="private">Private (Only Me)</option>
+                            <option value="department">Department</option>
+                            <option value="global">Global (All Users)</option>
+                          </select>
+                          <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none" size={16} />
+                        </div>
+                      </div>
+
+                      {formData.visibility === 'department' && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-400 mb-1.5">
+                            Department
+                          </label>
+                          <div className="relative">
+                            <select
+                              value={formData.department}
+                              onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                              className="w-full appearance-none px-4 py-2.5 pr-10 bg-black/40 border border-gray-700/50 rounded-lg text-white focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer"
+                              required={formData.visibility === 'department'}
+                            >
+                              <option value="">Select Department</option>
+                              {departments.map((dept) => (
+                                <option key={dept._id} value={dept._id}>
+                                  {dept.name}
+                                </option>
+                              ))}
+                            </select>
+                            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none" size={16} />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={formData.isPublic}
+                          onChange={(e) => setFormData({ ...formData, isPublic: e.target.checked })}
+                          className="w-4 h-4 rounded border-gray-700/50 bg-black/40 text-blue-500 focus:ring-blue-500/20 focus:ring-2"
+                        />
+                        Make this template public (visible to non-authenticated users)
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 mt-6 pt-4 border-t border-gray-800/60">
+                    <button
+                      type="submit"
+                      className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-xl hover:shadow-blue-600/20 transition-all hover:scale-[1.02]"
+                    >
+                      {editingTemplate ? 'Update Template' : 'Create Template'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowModal(false);
+                        resetForm();
+                      }}
+                      className="px-6 py-3 bg-gray-800/50 text-gray-400 rounded-lg font-medium hover:bg-gray-800/70 hover:text-white transition-all border border-gray-700/50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

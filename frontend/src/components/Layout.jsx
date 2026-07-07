@@ -35,7 +35,7 @@ const Layout = () => {
     <div className="flex h-screen bg-black text-white overflow-hidden">
       {/* Sidebar – width transition with will-change for smoother animation */}
       <aside
-        className={`fixed h-full overflow-y-auto z-10 bg-gray-900/80 backdrop-blur-md border-r border-gray-800/80 transition-all duration-300 ease-in-out will-change-[width] ${
+        className={`fixed h-full overflow-y-auto z-10 bg-black backdrop-blur-md border-r border-gray-800/80 transition-all duration-300 ease-in-out will-change-[width] ${
           isExpanded ? 'w-64' : 'w-20'
         }`}
         onMouseEnter={handleMouseEnter}
@@ -45,7 +45,7 @@ const Layout = () => {
         {/* Inner container ensures no content overflows */}
         <div className="flex flex-col h-full min-w-0">
           {/* Brand */}
-          <div className="p-5 border-b border-gray-800/60 flex items-center gap-3 h-20 min-w-0">
+          <div className="p-4 border-b border-gray-800/60 flex items-center gap-3 h-20 min-w-0">
             <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-xl shrink-0">
               SD
             </div>
@@ -195,7 +195,7 @@ const Layout = () => {
 
       {/* Main content – margin slides with sidebar */}
       <main
-        className={`flex-1 p-6 md:p-8 overflow-y-auto h-full bg-black transition-all duration-300 ease-in-out will-change-[margin-left] ${
+        className={`flex-1 overflow-y-auto h-full bg-black transition-all duration-300 ease-in-out will-change-[margin-left] ${
           isExpanded ? 'ml-64' : 'ml-20'
         }`}
       >
