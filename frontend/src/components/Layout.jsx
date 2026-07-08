@@ -54,7 +54,7 @@ const Layout = () => {
                 isExpanded ? 'opacity-100' : 'opacity-0'
               }`}
             >
-              <h2 className="text-xl font-bold text-white">Support Desk</h2>
+              <h2 className="text-xl font-bold text-white">IntelliAssist</h2>
               <p className="text-xs text-gray-400 capitalize">{user?.role}</p>
             </div>
           </div>
