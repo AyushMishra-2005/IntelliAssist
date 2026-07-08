@@ -28,28 +28,33 @@ export const initializeNotifications = (token) => {
 
   socket.on('connect_error', (error) => {
     console.error('Connection error:', error);
-  });
+  });
+
   socket.on('ticket:created', (ticket) => {
     toast.success(`New ticket created: ${ticket.ticketNumber}`, {
       duration: 5000,
     });
-  });
+  });
+
   socket.on('ticket:updated', (ticket) => {
     toast.info(`Ticket ${ticket.ticketNumber} has been updated`, {
       duration: 4000,
     });
-  });
+  });
+
   socket.on('ticket:assigned', (ticket) => {
     const assigneeName = ticket.assignedTo?.name || 'Unassigned';
     toast.info(`Ticket ${ticket.ticketNumber} assigned to ${assigneeName}`, {
       duration: 4000,
     });
-  });
+  });
+
   socket.on('ticket:status_changed', (ticket) => {
     toast.info(`Ticket ${ticket.ticketNumber} status changed to ${ticket.status?.title}`, {
       duration: 4000,
     });
-  });
+  });
+
   socket.on('ticket:reply', (data) => {
     const userName = data.reply?.user?.name || 'Someone';
     toast.info(`${userName} replied to ticket`, {

@@ -84,7 +84,8 @@ const SavedReplyPicker = ({ onSelect, ticketData }) => {
   const handleSelectReply = async (reply) => {
     try {
       const processedContent = replaceVariables(reply.content);
-      onSelect(processedContent);
+      onSelect(processedContent);
+
       const token = localStorage.getItem('token');
       await axios.post(`${API_URL}/saved-replies/${reply._id}/usage`, {}, {
         headers: { Authorization: `Bearer ${token}` }

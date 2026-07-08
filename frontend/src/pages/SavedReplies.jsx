@@ -115,7 +115,8 @@ const SavedReplies = () => {
 
   const handleCopy = async (reply) => {
     try {
-      await navigator.clipboard.writeText(reply.content);
+      await navigator.clipboard.writeText(reply.content);
+
       const token = localStorage.getItem('token');
       await axios.post(`${API_URL}/saved-replies/${reply._id}/usage`, {}, {
         headers: { Authorization: `Bearer ${token}` }
