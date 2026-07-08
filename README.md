@@ -698,4 +698,4 @@ npm test
 
 ---
 
-Made with ❤️ by Ayush Mishra
+Made with ❤️ by Team IntelliAssist
