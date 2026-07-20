@@ -9,7 +9,8 @@ import {
   Calendar,
   AlertCircle,
   Clock,
-  Tag
+  Tag,
+  Ticket 
 } from 'lucide-react';
 
 const TicketList = () => {
